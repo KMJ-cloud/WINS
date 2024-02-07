@@ -1,0 +1,39 @@
+# hosts 변경 필요
+# local_path, remote_path, remote_user 확인 필요
+# script_name: 해당 스크립트명으로 변경 필요
+# 재검토 필요(진행률 80%)
+
+- name: "RunBashScript"
+  hosts: rocky
+  become: yes
+  become_method: sudo
+  vars:
+    local_path: /home/ubuntu/wins
+    remote_path: /home/rocky/wins
+    remote_user: rocky
+    script_name: RockyLinux_Initial_set_log.sh
+
+  tasks:
+    - name: "Creating a directory"
+      file:
+        path: "/home/{{ remote_user }}/wins"
+        owner: "{{ remote_user }}"
+        group: "{{ remote_user }}"
+        state: directory
+        mode: '0774'
+
+    - name: "Copy a script to hosts server"
+      copy:
+        src: "{{ local_path }}/{{ script_name }}"
+        dest: "{{ remote_path }}/{{ script_name }}"
+        owner: "{{ remote_user }}"
+        group: "{{ remote_user }}"
+        mode: 664
+
+    - name: "Run a script on hosts server"
+      ignore_errors: yes
+      shell:
+        cmd: |
+          "{{ remote_path }}/{{ script_name }}"
+
+      
