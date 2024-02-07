@@ -1,0 +1,6 @@
+[servers]
+server1 ansible_host=172.31.47.62 ansible_ssh_user=ubuntu ansible_ssh_private_key_file=/root/ansible/kmj-pem.pem
+server2 ansible_host=172.31.12.19 ansible_ssh_user=rocky ansible_ssh_private_key_file=/root/ansible/kmj-pem.pem
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
