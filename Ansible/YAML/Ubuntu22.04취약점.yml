@@ -1,0 +1,52 @@
+# 검증 필요
+- name: System Secutity Vulnerability Action 2021 for Ubuntu22.04
+  hosts: all
+  become: true
+  tasks:
+  - name: UTC to KST Converter
+    file:
+      src: /usr/share/zoneinfo/Asia/Seoul
+      dest: /etc/localtime
+      owner: root
+      group: root
+      state: link
+
+  - name: History Time Logging
+    lineinfile: 
+      path: /etc/profile
+      line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \""
+
+  - name: "U-01) root 계정 원격 접속 제한"
+    lineinfile:
+      path: /etc/ssh/sshd_config
+      insertafter: '#PermitRootLogin prohibit-password'
+      line: "PermitRootLogin no"
+  
+  - name: "U-02) 패스워드 복잡성 설정"
+    lineinfile:
+      path: /etc/pam.d/common-password
+      regexp: "password\trequisite\t\t\tpam_deny.so"
+      line: "password\trequisite\t\t\tpam_pwquality.so\tenforce_for_root\tretry=3\tminlen=8\tdcredit=-1\tucredit=-1\tlcredit=-1\tocredit=-1"
+
+  - name: "U-03) 계정 잠금 임계값 설정"
+    lineinfile:
+      path: /etc/pam.d/common-auth
+      regexp: "auth\trequired\t\t\tpam_permit.so"
+      line: "auth\trequired\t\t\tpam_faillock.so deny=10 unlock_time=120"
+
+  - name: "U-08) /etc/shadow 파일 소유자 및 권한 설정"
+    file:
+      path: /etc/shadow
+      owner: root
+      mode: 0400
+
+  - name: "U-09) /etc/hosts 파일 소유자 및 권한 설정"
+    file:
+      path: /etc/hosts
+      owner: root
+      mode: 0600
+
+  - name: "U-11) /etc/syslog.conf 파일 소유자 및 권한 설정"
+    file:
+      path: /etc/rsyslog.conf
+      mode: 0640
