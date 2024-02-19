@@ -41,24 +41,33 @@
         src: /etc/ssh/sshd_config
         dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
 
+    #   rocky8 ftp 미설치
     #   ubuntu22.04 ftp 미설치
-    - name: "STEP 0-5. /etc/ftpusers Backup"
-      copy:
-        src: /etc/ftpusers
-        dest: "/root/winsBackup_{{ ldate.stdout }}/ftpusers"
+    #- name: "STEP 0-5. /etc/ftpusers Backup"
+    #  copy:
+    #    src: /etc/ftpusers
+    #    dest: "/root/winsBackup_{{ ldate.stdout }}/ftpusers"
+    #  ignore_errors: true  # 만약 서비스가 이미 중지되어 있어도 오류를 무시
 
     #   ubuntu22.04 selinux 미설치
-    - name: "STEP 0-6. /etc/selinux/config Backup"
+    - name: "STEP 0-5. /etc/selinux/config Backup"
       copy:
         src: /etc/selinux/config
         dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
 
     #   ubuntu22.04 경로 다름
-    - name: "STEP 0-7. /etc/chrony/chrony.conf Backup"
+    - name: "STEP 0-6. /etc/chrony/chrony.conf Backup"
       copy:
         src: /etc/chrony.conf # rocky8 
         # src: /etc/chrony/chrony.conf # ubuntu 22.04
         dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+
+
+    - name: "STEP 0-7. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "Backup is Done."
+
+
 
      ###############################
 
@@ -73,16 +82,26 @@
         group: root
         state: link
 
+    - name: "STEP 1. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "STEP 1. is Done."
+        
+
+     ###############################        
+
      ###############################
+     ###### STEP 2. 히스토리 로깅 시간 추가        
 
-
-
-     ###############################
-     ###### STEP 2. 타임존 변경        
-    - name: "2. History Time Logging"
+    - name: "STEP 2. History Time Logging"
       lineinfile:
         path: /etc/profile
         line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
+
+    - name: "STEP 2. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "STEP 2. is Done."
+
+
 
      ###############################
 
@@ -104,19 +123,63 @@
         # regexp: '# 찾아야됨' # ubuntu 22.04
         replace: 'PasswordAuthentication yes'
 
-    - name: "3-3. SSH Password Login"        
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: 'PasswordAuthentication no' # rocky 8
+#    - name: "3-3. SSH Password Login"        
+#      replace:
+#        path: /etc/ssh/sshd_config
+#        regexp: 'PasswordAuthentication no' # rocky 8
         # regexp: '# 찾아야됨' # ubuntu 22.04
-        replace: '#PasswordAuthentication no'
+#        replace: '#PasswordAuthentication no'
 
-    - name: "3-4. SSH Password Login"        
+
+# #이 계속 생겨서 아래와 같이 변경
+
+    - name: STEP 3-3. Check if PasswordAuthentication is set to no
+      shell: "grep -E '^\\s*PasswordAuthentication\\s+no' /etc/ssh/sshd_config || true"
+      register: grep_result
+      changed_when: false
+
+    - name: STEP 3-3. Comment PasswordAuthentication if it's set to no
       replace:
         path: /etc/ssh/sshd_config
-        regexp: 'GSSAPIAuthentication yes' # rocky 8
+        regexp: '^\s*PasswordAuthentication\s+no'
+        replace: '#PasswordAuthentication no'
+      when: grep_result.rc == 0
+
+    - name: STEP 3-3. Display the result
+      debug:
+        msg: "PasswordAuthentication is now commented in sshd_config."
+      when: grep_result.rc == 0 and grep_result.stdout != ""
+
+
+      #    - name: "3-4. SSH Password Login"        
+      #replace:
+      #  path: /etc/ssh/sshd_config
+      #  regexp: 'GSSAPIAuthentication yes' # rocky 8
         # regexp: '# 찾아야됨' # ubuntu 22.04
+        #  replace: '#GSSAPIAuthentication yes'
+
+    - name: STEP 3-4. Check if GSSAPIAuthentication is set to no
+      shell: "grep -E '^\\s*GSSAPIAuthentication\\s+yes' /etc/ssh/sshd_config || true"
+      register: grep_result
+      changed_when: false
+
+    - name: STEP 3-4. Comment GSSAPIAuthentication if it's set to no
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^\s*GSSAPIAuthentication\s+yes'
         replace: '#GSSAPIAuthentication yes'
+      when: grep_result.rc == 0
+
+    - name: STEP 3-4. Display the result
+      debug:
+        msg: "GSSAPIAuthentication is now commented in sshd_config."
+      when: grep_result.rc == 0 and grep_result.stdout != ""
+
+
+
+
+
+
 
      ###############################
 
@@ -128,10 +191,11 @@
       command: "grep -E '^root:[*!]' /etc/shadow"  # root 계정만 있음
       register: grep_result
       changed_when: false  # 명령이 실행되면 항상 변경으로 표시되지 않도록 함
+      ignore_errors: true  # RPM이 설치되어 있지 않으면 오류를 무시
 
     - name: STEP 4-2. Set password for root
       shell: "echo 'Sniper13@$' | passwd --stdin root > /dev/null"
-      when: grep_result.rc != 0  # 이미 비밀번호가 설정되어 있으면 변경하지 않음
+      when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 변경하지 않음
 
     - name: STEP 4-3. Display the result
       debug:
@@ -143,28 +207,21 @@
 
 
 
-     ###############################
-     ###### STEP 5. FTP root 계정 제한
 
-    - name: STEP 5-1. Check if root is already in /etc/ftpusers # config 파일 내용 확인
-      shell: "grep '^root$' /etc/ftpusers" # 파일에 root 가 들어가있는지 확인
+
+
+    - name: Check if root password is set
+      shell: "grep -E '^root:[*!]' /etc/shadow"
       register: grep_result
-      changed_when: false  # 명령이 실행되면 항상 변경으로 표시되므로, 실제로 결과가 변경되었는지를 확인
+      changed_when: false  # 명령이 실행되면 항상 변경으로 표시되지 않도록 함
+      ignore_errors: true  # RPM이 설치되어 있지 않으면 오류를 무시
 
-    - name: STEP 5-2. Add root to /etc/ftpusers
-      lineinfile:
-        path: /etc/ftpusers
-        line: "root"
-      when: grep_result.rc != 0  # root가 이미 있는 경우에는 추가하지 않음
-
-    - name: STEP 5-3. Display the result
+    - name: Display the result
       debug:
-        msg: "root is now in /etc/ftpusers"
-      when: grep_result.rc == 0  # root가 이미 있는 경우에만 출력
+        msg: "Root password is {{ 'not ' if grep_result.rc != 0 else '' }}set."
 
 
 
-     ###############################
 
 
      ###############################
@@ -177,24 +234,33 @@
         replace: 'SELINUX=disabled'
 
 
-
      ###############################
      ###### STEP 7. firewalld 비활성화
 
-    - name: "7-1. Firewalld Disable" # firewalld 서비스 중지
+    - name: Check if firewalld is installed # firewalld 설치 유무 확인
+      stat: # 파일 존재 확인하는 모듈
+        path: /usr/bin/firewalld
+      register: firewalld_installed
+
+    - name: Display the result
+      debug:
+        msg: "firewalld is {{ 'installed' if firewalld_installed.stat.exists else 'not installed' }}"
+
+    - name: "7-1. Check if firewalld is running" # firewalld 서비스 중지
       systemd:
         name: firewalld
         state: stopped
-      ignore_errors: true  # 만약 서비스가 이미 중지되어 있어도 오류를 무시
+      #ignore_errors: true  # 만약 서비스가 이미 중지되어 있어도 오류를 무시
+      register: firewalld_running # 서비스 실행 유무 저장
+      when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
 
     - name: "7-2. Display the result" # 서비스 중지 메시지 출력
       debug:
-        msg: "The service '{{ firewalld }}' is stopped."
+        msg: "firewalld is {{ 'running' if firewalld_running.status == 'active' else 'not running' }}"
+      when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
 
 
-
-
-     ###############################             
+     ###############################
 
      ###############################
      ###### STEP 8. 네트워크 기본 툴 패키지 설치
@@ -202,17 +268,48 @@
     - name: "STEP 8-1. Network Tool Install" # dnf로 패키지 설치
       dnf:
         name: iputils, net-tools, tcpdump
+       #name: tcpdump
         state: latest # 최신버전이 아니면 업데이트도 진행
-        # state: present # 설치 확인만     
+       # state: present # 설치 확인만     
       
-    - name: "STEP 8-2. Check if the RPM is installed"
-      command: "rpm -q iputils,net-tools,tcpdump"
-      register: rpm_check_result
-      ignore_errors: true  # RPM이 설치되어 있지 않으면 오류를 무시
 
-    - name: "STEP 8-3. Display the result"
+
+      # - name: Install tcpdump package
+      #dnf:
+      #  name: tcpdump
+      #  state: present
+
+    - name: Check if iputils is installed
+      command: "rpm -q iputils"
+      register: iputils_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Display iputils installation status
       debug:
-        msg: "The RPM is {{ 'installed' if rpm_check_result.rc == 0 else 'not installed' }}" 
+        msg: "iputils is {{ 'installed' if iputils_installed.rc == 0 else 'not installed' }}"
+
+    - name: Check if net-tools is installed
+      command: "rpm -q net-tools"
+      register: net_tools_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Display net-tools installation status
+      debug:
+        msg: "net-tools is {{ 'installed' if net_tools_installed.rc == 0 else 'not installed' }}"
+
+
+    - name: Check if tcpdump is installed
+      command: "rpm -q tcpdump"
+      register: tcpdump_installed
+      changed_when: false
+      failed_when: false
+
+    - name: Display tcpdump installation status
+      debug:
+        msg: "tcpdump is {{ 'installed' if tcpdump_installed.rc == 0 else 'not installed' }}"
+
 
      ###############################
 
@@ -220,14 +317,27 @@
      ###############################
      ###### STEP 9. NTP 설정
 
-    - name: "STEP 9-1. NTP Client Configuration -1" # 기본 ntp 설정 주석
+    - name: STEP 9-1. NTP Client Configuration # 이름 바꾸기
+      shell: "grep -E '^\\s*pool\\s+2.rocky.pool.ntp.org\\s+iburst' /etc/chrony.conf || true"
+      register: chrony_result
+      changed_when: false
+
+    - name: STEP 9-1. Comment PasswordAuthentication if it's set to no
       replace:
         path: /etc/chrony.conf
-        regexp: 'pool 2.rocky.pool.ntp.org iburst'
+        regexp: '^\s*pool\s+2.rocky.pool.ntp.org\s+iburst'
         replace: '#pool 2.rocky.pool.ntp.org iburst'
+      when: chrony_result.rc == 0
 
+    - name: STEP 9-1. Display the result
+      debug:
+        msg: "NTP Server is now commented in chrony_config."
+      when: chrony_result.rc == 0 and grep_result.stdout != ""
+
+
+        
     - name: "STEP 9-2. NTP Client Configuration -2" # time.bora.net 추가
       lineinfile:
         path: /etc/chrony.conf
         insertafter: '#pool 2.rocky.pool.ntp.org iburst'
-        line: "server time.bora.net iburst"
+        line: "server time.bora.net iburst"        
