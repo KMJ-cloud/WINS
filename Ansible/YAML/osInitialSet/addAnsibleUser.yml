@@ -1,0 +1,23 @@
+# OS: Ubuntu 22.04
+# 'ansible' 계정 생성 후 sudo 권한 부여
+- name: "Add a ansible user"
+  hosts: ubuntu
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Add ansible user    # Ubuntu22.04
+      user:
+        name: ansible
+        password: "{{ 'Sniper13@$' | password_hash('sha512', 'passlib') }}"
+        shell: /bin/bash
+        createhome: yes
+
+    - name: Grant sudo privileges to ansible user # Ubuntu22.04
+      lineinfile:
+        dest: /etc/sudoers
+        # line: "ansible ALL=(ALL) NOPASSWD: ALL"
+        line: "ansible ALL=(ALL:ALL) ALL"
+        validate: 'visudo -cf %s'
+      become: yes
+      become_method: sudo
