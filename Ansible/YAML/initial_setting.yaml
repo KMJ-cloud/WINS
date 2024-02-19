@@ -79,7 +79,10 @@
 
      ###############################
      ###### STEP 2. 타임존 변경        
-
+    - name: "2. History Time Logging"
+      lineinfile:
+        path: /etc/profile
+        line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
 
      ###############################
 
