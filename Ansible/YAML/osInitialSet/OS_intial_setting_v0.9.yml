@@ -320,7 +320,8 @@
     - name: STEP 7-1. Check if firewalld is installed # firewalld 설치 유무 확인
       stat: # 파일 존재 확인하는 모듈
         path: /usr/bin/firewalld
-
+      register: firewalld_installed
+      
     - name: STEP 7-2. Display the result
       debug:
         msg: "firewalld is {{ 'installed' if firewalld_installed.stat.exists else 'not installed' }}"
