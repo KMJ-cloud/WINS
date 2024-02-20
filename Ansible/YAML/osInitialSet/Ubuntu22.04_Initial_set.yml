@@ -5,19 +5,16 @@
 #  #######    ##     ##  ###       ##           ##        ##   #  ##   ##  ##   ##   ##  ##           ## # ##       ##   ##                 ##      ## #    ######   ## # ## #
 #  ### ###    ##     ##   ##  ##   ##            ##  ##   ##  ##  ##   ##  ##   ##   ## ##            ##   ##  ##   ##   ##                 ##      ##   #  ##  ##   ##   ## #
 #  ##   ##   ####    ##   ##   #####              ####   #######   #####    #####   #####             ##   ##   #####   ####               ####    #######  ##  ##   ##   ## #
-
-
-
+--- 
 - name: "Cloud MSP Initial set"
-  hosts: all #ubuntu
+  hosts: Ubuntu
   become: yes
   gather_facts: no
 
   tasks:
      ###############################
-     ###### STEP 0. 백업
-     
-    - name: "STEP 0. Config File Backup"
+     ###### STEP 0. 백업     
+    - name: "STEP 0-0. Config File Backup"
       command: date +"%Y-%m-%d_%H-%M-%S"
       register: ldate
 
@@ -43,14 +40,12 @@
 
     - name: "STEP 0-5. /etc/chrony/chrony.conf Backup"
       copy:
-        src: /etc/chrony/chrony.conf # ubuntu 22.04
+        src: /etc/chrony/chrony.conf
         dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
 
-     ###############################
 
      ###############################
      ###### STEP 1. 타임존 변경
- 
     - name: "STEP 1. UTC to KST Converter"
       file:
         src: /usr/share/zoneinfo/Asia/Seoul
@@ -59,103 +54,85 @@
         group: root
         state: link
 
-     ###############################
-
-
 
      ###############################
-     ###### STEP 2. 타임존 변경        
-    - name: "2. History Time Logging"
+     ###### STEP 2. 히스토리 시간 포맷 설정        
+    - name: "STEP 2. History Time Logging"
       lineinfile:
         path: /etc/profile
         line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
 
-     ###############################
-
 
      ###############################
      ###### STEP 3. root 로그인 제한
-
-    - name: "3-1. SSH root login: Block to access root ssh directly"
+    - name: "STEP 3-1. SSH root login: Block to access root ssh directly"
       replace:
         path: /etc/ssh/sshd_config
         regexp: '#PermitRootLogin prohibit-password'
         replace: 'PermitRootLogin no'
 
-    - name: "3-2. SSH Password Login: Allow to login with password"        
+    - name: "STEP 3-2. SSH Password Login: Allow to login with password"        
       replace:
         path: /etc/ssh/sshd_config
-        regexp: '#PasswordAuthentication no'
-        replace: 'PasswordAuthentication yes'
+        regexp: 'PasswordAuthentication no'
+        replace: 'PasswordAuthentication yes'  
 
-    - name: "3-3. SSH Password Login: Use Authentication based on GSSAPI"
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: '#GSSAPIAuthentication no'
-        replace: 'GSSAPIAuthentication yes'
-
-     ###############################
+    - name: "STEP 3-3. SSH Service : restart sshd"
+      service:
+        name: sshd
+        state: restarted
 
 
      ###############################
      ###### STEP 4. 계정 패스워드 변경
+    - name: "STEP 4-1. Set root password"
+      user:
+        name: root
+        password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-    - name: STEP 4-1. Check if password is already set for root
-      command: "grep -E '^root:[*!]' /etc/shadow"  # root 계정만 있음
-      register: grep_result
-      changed_when: false  # 명령이 실행되면 항상 변경으로 표시되지 않도록 함
+    - name: "STEP 4-2. Set password for ubuntu"
+      user:
+        name: ubuntu
+        password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-    - name: STEP 4-2. Set password for root
-      shell: "echo 'Sniper13@$' | passwd --stdin root > /dev/null"
-      when: grep_result.rc != 0  # 이미 비밀번호가 설정되어 있으면 변경하지 않음
-
-    - name: STEP 4-3. Display the result
+    - name: "STEP 4-3. Display the result"
       debug:
-        msg: "Password for root is set."
-      when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 출력하지 않음      
-
-
-     ###############################
-
-
-
-
-
-
-     ###############################             
+        msg: "Password is set."
+    
 
      ###############################
-     ###### STEP 8. 네트워크 기본 툴 패키지 설치
-     
-    - name: "STEP 8-1. Network Tool Install" # dnf로 패키지 설치
+     ###### STEP 5. 네트워크 기본 툴 패키지 설치
+    - name: "STEP 5. Network Tool Install"
       apt:
-        name: iputils, net-tools, tcpdump
-        state: latest # 최신버전이 아니면 업데이트도 진행
-        # state: present # 설치 확인만     
-      
-    - name: "STEP 8-2. Check if the RPM is installed"
-      command: "rpm -q iputils,net-tools,tcpdump"
-      register: rpm_check_result
-      ignore_errors: true  # RPM이 설치되어 있지 않으면 오류를 무시
-
-    - name: "STEP 8-3. Display the result"
-      debug:
-        msg: "The RPM is {{ 'installed' if rpm_check_result.rc == 0 else 'not installed' }}" 
-
-     ###############################
+        name:
+          - iputils-*
+          - net-tools
+          - tcpdump
+        state: present
 
 
      ###############################
-     ###### STEP 9. NTP 설정
-
-    - name: "STEP 9-1. NTP Client Configuration -1" # 기본 ntp 설정 주석
-      replace:
-        path: /etc/chrony.conf
-        regexp: 'pool 2.rocky.pool.ntp.org iburst'
-        replace: '#pool 2.rocky.pool.ntp.org iburst'
-
-    - name: "STEP 9-2. NTP Client Configuration -2" # time.bora.net 추가
+     ###### STEP 6. NTP 설정
+    - name: "STEP 6-1. NTP Client Configuration: Remove origin NTP server"
       lineinfile:
-        path: /etc/chrony.conf
-        insertafter: '#pool 2.rocky.pool.ntp.org iburst'
-        line: "server time.bora.net iburst"
+        path: /etc/chrony/chrony.conf
+        state: absent
+        regexp: "^pool"
+
+    - name: "STEP 6-2. NTP Client Configuration: Add a NTP Korea Server"
+      lineinfile:
+        path: /etc/chrony/chrony.conf
+        insertafter: '# See http://www.pool.ntp.org/join.html for more information.'
+        line: 'server time.bora.net iburst'
+
+    - name: "STEP 6-3. NTP Client Configuration: restart chrony"
+      service:
+        name: chrony
+        state: restarted
+
+
+     ###############################
+     ###### 모든 작업 완료
+    - name: "TASK IS Done"
+      debug:
+        msg: "ALL OF TASK IS Done" 
