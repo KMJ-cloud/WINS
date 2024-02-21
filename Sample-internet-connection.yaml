@@ -1,0 +1,23 @@
+# 인터넷 연결 확인 후 tcpdump 패키지 설치 플레이북 예제
+- name: Check internet connection and install tcpdump
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: Check internet connection
+      command: "ping -c 2 10.10.10.111" # 일부로 통신 안되게 테스트 하기위해 가짜 아이피 넣음
+      command: "ping -c 2 google.com" # 구글 핑 테스트
+      ignore_errors: true # 에러 무시
+      register: command_result # 결과 저장 변수
+      failed_when: false # 항상 작업이 성공했다고 표시
+
+    - name: Install tcpdump using dnf
+      dnf:
+        name: tcpdump
+        state: present
+      when: "command_result.rc == 0" # 핑이 성공하면 dnf로 패키지 설치
+
+    - name: Display installation message if internet is not available
+      debug:
+        msg: "Internet connection is not available. Please install tcpdump manually."
+      when: "command_result.rc != 0" # 핑이 실패하면 위 메시지 표시
