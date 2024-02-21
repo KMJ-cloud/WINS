@@ -162,7 +162,7 @@
 
 
 - name: "Cloud MSP Initial set"
-  hosts: rocky
+  hosts: Rocky
   become: yes
   gather_facts: no
 
