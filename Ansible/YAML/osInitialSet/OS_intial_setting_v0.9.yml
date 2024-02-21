@@ -287,6 +287,11 @@
         msg: "GSSAPIAuthentication is now commented in sshd_config."
       when: grep_result.rc == 0 and grep_result.stdout != ""
 
+    - name: "STEP 3-5. SSH Service : restart sshd"
+      service:
+        name: sshd
+        state: restarted
+
      ###############################
      ###### STEP 4. 계정 패스워드 변경
 
@@ -397,9 +402,13 @@
         msg: "NTP Server is now commented in chrony_config."
       when: chrony_result.rc == 0 and grep_result.stdout != ""
 
-
     - name: "STEP 9-2. NTP Client Configuration" # time.bora.net 추가
       lineinfile:
         path: /etc/chrony.conf
         insertafter: '#pool 2.rocky.pool.ntp.org iburst'
         line: "server time.bora.net iburst"
+        
+    - name: "STEP 6-3. NTP Client Configuration: restart chrony"
+      service:
+        name: chrony
+        state: restarted
