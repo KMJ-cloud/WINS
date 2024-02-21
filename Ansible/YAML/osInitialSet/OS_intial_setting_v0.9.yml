@@ -25,26 +25,20 @@
         state: directory
 
     - name: "STEP 0-2. /etc/localtime Backup"
-      copy:
-        src: /etc/localtime
-        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/localtime"
+      #ignore_errors: true
 
     - name: "STEP 0-3. /etc/profile Backup"
-      copy:
-        src: /etc/profile
-        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/profile"
+      #ignore_errors: true
 
     - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
-      copy:
-        src: /etc/ssh/sshd_config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/sshd_config"
+      #ignore_errors: true
 
     - name: "STEP 0-5. /etc/chrony/chrony.conf Backup"
-      copy:
-        src: /etc/chrony/chrony.conf # ubuntu 22.04
-        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
-
-
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+      #ignore_errors: true
 
      ###############################
      ###### STEP 1. 타임존 변경
@@ -57,19 +51,12 @@
         group: root
         state: link
 
-
-
-
-
      ###############################
      ###### STEP 2. 히스토리 시간 포맷 설정        
     - name: "STEP 2. History Time Logging"
       lineinfile:
         path: /etc/profile
         line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
-
-
-
 
      ###############################
      ###### STEP 3. root 로그인 제한
@@ -119,7 +106,6 @@
       debug:
         msg: "Password is set."
     
-
      ###############################
      ###### STEP 8. 네트워크 기본 툴 패키지 설치
 
@@ -156,10 +142,8 @@
     - name: "TASK IS Done"
       debug:
         msg: "ALL OF TASK IS Done" 
-
 --- 
 ###### 로키 시작#######################
-
 
 - name: "Cloud MSP Initial set"
   hosts: Rocky
@@ -180,29 +164,25 @@
         state: directory
 
     - name: "STEP 0-2. /etc/localtime Backup"
-      copy:
-        src: /etc/localtime
-        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/localtime"
+      #ignore_errors: true
 
     - name: "STEP 0-3. /etc/profile Backup"
-      copy:
-        src: /etc/profile
-        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/profile"
+      #ignore_errors: true
 
     - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
-      copy:
-        src: /etc/ssh/sshd_config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/sshd_config"
+      #ignore_errors: true
 
     - name: "STEP 0-5. /etc/selinux/config Backup"
-      copy:
-        src: /etc/selinux/config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/selinux_config"
+      #ignore_errors: true
 
     - name: "STEP 0-6. /etc/chrony/chrony.conf Backup"
+      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+      #ignore_errors: true
       copy:
-        src: /etc/chrony.conf
-        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
 
     - name: "STEP 0-7. Display the result" # 서비스 중지 메시지 출력
       debug:
