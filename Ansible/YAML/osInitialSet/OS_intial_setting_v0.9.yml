@@ -410,5 +410,5 @@
         
     - name: "STEP 9-3. NTP Client Configuration: restart chrony"
       service:
-        name: chrony
+        name: chronyd
         state: restarted
