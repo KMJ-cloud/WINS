@@ -1,0 +1,251 @@
+- name: "Cloud MSP Initial set"
+  hosts: Rocky
+  become: yes
+  gather_facts: no
+
+  tasks:
+     ###############################
+     ###### STEP 0. 백업
+
+    - name: "STEP 0. Config File Backup"
+      command: date +"%Y-%m-%d_%H-%M-%S"
+      register: ldate
+
+    - name: "STEP 0-1. Backup 디렉토리 생성"
+      file:
+        path: "/root/winsBackup_{{ ldate.stdout }}"
+        state: directory
+
+    - name: "STEP 0-2. /etc/localtime Backup"
+      copy:
+        src: /etc/localtime
+        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
+        remote_src: yes
+
+    - name: "STEP 0-3. /etc/profile Backup"
+      copy:
+        src: /etc/profile
+        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
+        remote_src: yes
+
+    - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
+        remote_src: yes
+
+    - name: "STEP 0-5. /etc/selinux/config Backup"
+      copy:
+        src: /etc/selinux/config
+        dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
+        remote_src: yes
+
+    - name: "STEP 0-6. /etc/chrony/chrony.conf Backup"
+      copy:
+        src: /etc/chrony.conf
+        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+        remote_src: yes
+
+    - name: "STEP 0-7. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "Backup is Done."
+
+     ###############################
+     ###### STEP 1. 타임존 변경
+
+    - name: "STEP 1 UTC to KST Converter"
+      file:
+        src: /usr/share/zoneinfo/Asia/Seoul
+        dest: /etc/localtime
+        owner: root
+        group: root
+        state: link
+
+    - name: "STEP 1. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "STEP 1. is Done."
+
+     ###############################
+     ###### STEP 2. 히스토리 로깅 시간 추가
+
+    - name: "STEP 2. History Time Logging"
+      lineinfile:
+        path: /etc/profile
+        line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
+
+    - name: "STEP 2. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "STEP 2. is Done."
+
+     ###############################
+     ###### STEP 3. root 로그인 제한
+
+    - name: "STEP 3-1. SSH root login"
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: 'PermitRootLogin yes'
+        replace: 'PermitRootLogin no'
+
+    - name: "STEP 3-2. SSH Password Login"
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '#PasswordAuthentication yes' 
+        replace: 'PasswordAuthentication yes'
+
+    - name: STEP 3-3. Check if PasswordAuthentication is set to no
+      shell: "grep -E '^\\s*PasswordAuthentication\\s+no' /etc/ssh/sshd_config || true"
+      register: grep_result
+      changed_when: false
+
+    - name: STEP 3-3. Comment PasswordAuthentication if it's set to no
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^\s*PasswordAuthentication\s+no'
+        replace: '#PasswordAuthentication no'
+      when: grep_result.rc == 0
+
+    - name: STEP 3-3. Display the result
+      debug:
+        msg: "PasswordAuthentication is now commented in sshd_config."
+      when: grep_result.rc == 0 and grep_result.stdout != ""
+
+
+    - name: STEP 3-4. Check if GSSAPIAuthentication is set to no
+      shell: "grep -E '^\\s*GSSAPIAuthentication\\s+yes' /etc/ssh/sshd_config || true"
+      register: grep_result
+      changed_when: false
+
+    - name: STEP 3-4. Comment GSSAPIAuthentication if it's set to no
+      replace:
+        path: /etc/ssh/sshd_config
+        regexp: '^\s*GSSAPIAuthentication\s+yes'
+        replace: '#GSSAPIAuthentication yes'
+      when: grep_result.rc == 0
+
+    - name: STEP 3-4. Display the result
+      debug:
+        msg: "GSSAPIAuthentication is now commented in sshd_config."
+      when: grep_result.rc == 0 and grep_result.stdout != ""
+
+    - name: "STEP 3-5. SSH Service : restart sshd"
+      service:
+        name: sshd
+        state: restarted
+
+     ###############################
+     ###### STEP 4. 계정 패스워드 변경
+
+    - name: STEP 4-1. Set password for root
+      shell: "echo 'Sniper13@$' | passwd --stdin root > /dev/null"
+      when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 변경하지 않음
+
+    - name: STEP 4-2. Set password for rocky
+      shell: "echo 'Sniper13@$' | passwd --stdin rocky > /dev/null"
+      when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 변경하지 않음
+
+    - name: STEP 4-2. Display the result
+      debug:
+        msg: "Password for root is set."
+      when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 출력하지 않음
+
+     ###############################
+     ###### STEP 6. Selinux 비활성화
+
+    - name: "STEP 6. Selinux Disable" # config 파일 수정
+      replace:
+        path: /etc/selinux/config
+        regexp: 'SELINUX=enforcing'
+        replace: 'SELINUX=disabled'
+
+     ###############################
+     ###### STEP 7. firewalld 비활성화
+
+    - name: STEP 7-1. Check if firewalld is installed # firewalld 설치 유무 확인
+      stat: # 파일 존재 확인하는 모듈
+        path: /usr/bin/firewalld
+      register: firewalld_installed
+      
+    - name: STEP 7-2. Display the result
+      debug:
+        msg: "firewalld is {{ 'installed' if firewalld_installed.stat.exists else 'not installed' }}"
+
+    - name: "STEP 7-3. Check if firewalld is running" # firewalld 서비스 중지
+      systemd:
+        name: firewalld
+        state: stopped
+      register: firewalld_running # 서비스 실행 유무 저장
+      when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
+
+    - name: "STEP 7-4. Display the result" # 서비스 중지 메시지 출력
+      debug:
+        msg: "firewalld is {{ 'running' if firewalld_running.status == 'active' else 'not running' }}"
+      when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
+
+     ###############################
+     ###### STEP 8. 네트워크 기본 툴 패키지 설치
+
+    - name: "STEP 8-1. Network Tool Install" # dnf로 패키지 설치
+      dnf:
+        name: iputils, net-tools, tcpdump
+        state: latest # 최신버전이 아니면 업데이트도 진행
+
+    - name: STEP 8-2. Check if iputils is installed
+      command: "rpm -q iputils"
+      register: iputils_installed
+      changed_when: false
+      failed_when: false
+
+    - name: STEP 8-2. Display iputils installation status
+      debug:
+        msg: "iputils is {{ 'installed' if iputils_installed.rc == 0 else 'not installed' }}"
+
+    - name: STEP 8-3. Check if net-tools is installed
+      command: "rpm -q net-tools"
+      register: net_tools_installed
+      changed_when: false
+      failed_when: false
+
+    - name: STEP 8-3. Display net-tools installation status
+      debug:
+        msg: "net-tools is {{ 'installed' if net_tools_installed.rc == 0 else 'not installed' }}"
+
+    - name: STEP 8-4. Check if tcpdump is installed
+      command: "rpm -q tcpdump"
+      register: tcpdump_installed
+      changed_when: false
+      failed_when: false
+
+    - name: STEP 8-4. Display tcpdump installation status
+      debug:
+        msg: "tcpdump is {{ 'installed' if tcpdump_installed.rc == 0 else 'not installed' }}"
+
+     ###############################
+     ###### STEP 9. NTP 설정
+
+    - name: STEP 9-1. NTP Client Configuration
+      shell: "grep -E '^\\s*pool\\s+2.rocky.pool.ntp.org\\s+iburst' /etc/chrony.conf || true"
+      register: chrony_result
+      changed_when: false
+
+    - name: STEP 9-1. Comment PasswordAuthentication if it's set to no
+      replace:
+        path: /etc/chrony.conf
+        regexp: '^\s*pool\s+2.rocky.pool.ntp.org\s+iburst'
+        replace: '#pool 2.rocky.pool.ntp.org iburst'
+      when: chrony_result.rc == 0
+
+    - name: STEP 9-1. Display the result
+      debug:
+        msg: "NTP Server is now commented in chrony_config."
+      when: chrony_result.rc == 0 and grep_result.stdout != ""
+
+    - name: "STEP 9-2. NTP Client Configuration" # time.bora.net 추가
+      lineinfile:
+        path: /etc/chrony.conf
+        insertafter: '#pool 2.rocky.pool.ntp.org iburst'
+        line: "server time.bora.net iburst"
+        
+    - name: "STEP 9-3. NTP Client Configuration: restart chrony"
+      service:
+        name: chronyd
+        state: restarted
