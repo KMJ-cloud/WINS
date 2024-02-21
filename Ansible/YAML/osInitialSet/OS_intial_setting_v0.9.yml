@@ -408,7 +408,7 @@
         insertafter: '#pool 2.rocky.pool.ntp.org iburst'
         line: "server time.bora.net iburst"
         
-    - name: "STEP 6-3. NTP Client Configuration: restart chrony"
+    - name: "STEP 9-3. NTP Client Configuration: restart chrony"
       service:
         name: chrony
         state: restarted
