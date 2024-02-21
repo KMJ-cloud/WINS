@@ -25,20 +25,28 @@
         state: directory
 
     - name: "STEP 0-2. /etc/localtime Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/localtime"
-      #ignore_errors: true
+      copy:
+        src: /etc/localtime
+        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
+        remote_src: yes
 
     - name: "STEP 0-3. /etc/profile Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/profile"
-      #ignore_errors: true
+      copy:
+        src: /etc/profile
+        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
+        remote_src: yes
 
     - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/sshd_config"
-      #ignore_errors: true
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
+        remote_src: yes
 
     - name: "STEP 0-5. /etc/chrony/chrony.conf Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/chrony.conf"
-      #ignore_errors: true
+      copy:
+        src: /etc/chrony/chrony.conf # ubuntu 22.04
+        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+        remote_src: yes
 
      ###############################
      ###### STEP 1. 타임존 변경
@@ -52,7 +60,8 @@
         state: link
 
      ###############################
-     ###### STEP 2. 히스토리 시간 포맷 설정        
+     ###### STEP 2. 히스토리 시간 포맷 설정
+     
     - name: "STEP 2. History Time Logging"
       lineinfile:
         path: /etc/profile
@@ -95,12 +104,10 @@
         name: root
         password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-
     - name: STEP 4-2. Set password for ubuntu
       user:
         name: ubuntu
         password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
-
 
     - name: STEP 4-3. Display the result
       debug:
@@ -109,7 +116,6 @@
      ###############################
      ###### STEP 8. 네트워크 기본 툴 패키지 설치
 
-    # KMJ
     - name: "STEP 5. Network Tool Install"
       apt:
         name:
@@ -117,7 +123,6 @@
           - net-tools
           - tcpdump
         state: present
-
 
      ###############################
      ###### STEP 9. NTP 설정
@@ -164,25 +169,34 @@
         state: directory
 
     - name: "STEP 0-2. /etc/localtime Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/localtime"
-      #ignore_errors: true
+      copy:
+        src: /etc/localtime
+        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
+        remote_src: yes
 
     - name: "STEP 0-3. /etc/profile Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/profile"
-      #ignore_errors: true
+      copy:
+        src: /etc/profile
+        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
+        remote_src: yes
 
     - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/sshd_config"
-      #ignore_errors: true
+      copy:
+        src: /etc/ssh/sshd_config
+        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
+        remote_src: yes
 
     - name: "STEP 0-5. /etc/selinux/config Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/selinux_config"
-      #ignore_errors: true
+      copy:
+        src: /etc/selinux/config
+        dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
+        remote_src: yes
 
     - name: "STEP 0-6. /etc/chrony/chrony.conf Backup"
-      command: "cp /etc/chrony/chrony.conf /root/winsBackup_{{ ldate.stdout }}/chrony.conf"
-      #ignore_errors: true
       copy:
+        src: /etc/chrony.conf
+        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
+        remote_src: yes
 
     - name: "STEP 0-7. Display the result" # 서비스 중지 메시지 출력
       debug:
@@ -203,7 +217,6 @@
       debug:
         msg: "STEP 1. is Done."
 
-
      ###############################
      ###### STEP 2. 히스토리 로깅 시간 추가
 
@@ -215,7 +228,6 @@
     - name: "STEP 2. Display the result" # 서비스 중지 메시지 출력
       debug:
         msg: "STEP 2. is Done."
-
 
      ###############################
      ###### STEP 3. root 로그인 제한
@@ -288,7 +300,6 @@
         msg: "Password for root is set."
       when: grep_result.rc == 0  # 이미 비밀번호가 설정되어 있으면 출력하지 않음
 
-
      ###############################
      ###### STEP 6. Selinux 비활성화
 
@@ -297,7 +308,6 @@
         path: /etc/selinux/config
         regexp: 'SELINUX=enforcing'
         replace: 'SELINUX=disabled'
-
 
      ###############################
      ###### STEP 7. firewalld 비활성화
@@ -322,7 +332,6 @@
       debug:
         msg: "firewalld is {{ 'running' if firewalld_running.status == 'active' else 'not running' }}"
       when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
-
 
      ###############################
      ###### STEP 8. 네트워크 기본 툴 패키지 설치
