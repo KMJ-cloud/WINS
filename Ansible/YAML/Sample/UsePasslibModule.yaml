@@ -1,0 +1,14 @@
+- name: "Cloud MSP Initial set"
+  hosts: Ubuntu
+  become: yes
+  gather_facts: no
+
+  tasks:
+    # 현재 crypt 모듈이 Python에서 향후 버전에서 제거될 예정
+    # 대신 passlib 라이브러리를 사용하여 암호화 기능을 사용 가능
+    # passlib 라이브러리를 설치하고, lookup 함수를 사용 필요
+    # pip install passlib
+    # - name: Change user password
+    #   user:
+    #     name: example_user
+    #     password: "{{ lookup('password', 'your_new_password', 'sha512_crypt') }}"
