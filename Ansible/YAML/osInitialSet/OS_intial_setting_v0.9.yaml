@@ -14,44 +14,47 @@
   tasks:
      ###############################
      ###### STEP 0. 백업
-     
-    - name: "STEP 0. Config File Backup"
+    - name: "STEP 0-0. Backup: Date Formatiing"
       command: date +"%Y-%m-%d_%H-%M-%S"
       register: ldate
 
-    - name: "STEP 0-1. Make a Backup Directory "
+    - name: "STEP 0-1. Backup: Make a Backup Directory "
       file:
         path: "/root/winsBackup_{{ ldate.stdout }}"
         state: directory
 
-    - name: "STEP 0-2. /etc/localtime Backup"
+    - name: "STEP 0-2. Backup: /etc/localtime Backup"
       copy:
         src: /etc/localtime
         dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
         remote_src: yes
 
-    - name: "STEP 0-3. /etc/profile Backup"
+    - name: "STEP 0-3. Backup: /etc/profile Backup"
       copy:
         src: /etc/profile
         dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
         remote_src: yes
 
-    - name: "STEP 0-4. /etc/ssh/sshd_config Backup"
+    - name: "STEP 0-4. Backup: /etc/ssh/sshd_config Backup"
       copy:
         src: /etc/ssh/sshd_config
         dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
         remote_src: yes
 
-    - name: "STEP 0-5. /etc/chrony/chrony.conf Backup"
+    - name: "STEP 0-5. Backup: /etc/chrony/chrony.conf Backup"
       copy:
         src: /etc/chrony/chrony.conf # ubuntu 22.04
         dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
         remote_src: yes
 
+    - name: "STEP 0-6. Set password: Result"
+      debug:
+        msg: "Done backup preparing."
+
+
      ###############################
      ###### STEP 1. 타임존 변경
- 
-    - name: "STEP 1. UTC to KST Converter"
+    - name: "STEP 1-1. Convert UTC to KST"
       file:
         src: /usr/share/zoneinfo/Asia/Seoul
         dest: /etc/localtime
@@ -59,64 +62,67 @@
         group: root
         state: link
 
+    - name: "STEP 1-2. Convert UTC to KST: Result"
+      debug:
+        msg: "Done convertting UTC to KST."
+
+
      ###############################
      ###### STEP 2. 히스토리 시간 포맷 설정
-     
-    - name: "STEP 2. History Time Logging"
+    - name: "STEP 2-1. History Time Log"
       lineinfile:
         path: /etc/profile
         line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
+        
+    - name: "STEP 2-2. History Time Log: Result"
+      debug:
+        msg: "Done history Time."
+
 
      ###############################
      ###### STEP 3. root 로그인 제한
-
-    - name: "STEP 3-1. SSH root login: Block to access root ssh directly"
+    - name: "STEP 3-1. Set SSH Config: Block to access root ssh directly"
       replace:
         path: /etc/ssh/sshd_config
         regexp: '#PermitRootLogin prohibit-password'
         replace: 'PermitRootLogin no'
 
-    - name: "STEP 3-2. SSH Password Login: Allow to login with password"        
+    - name: "STEP 3-2. Set SSH Config: Allow to login with password"        
       replace:
         path: /etc/ssh/sshd_config
         regexp: 'PasswordAuthentication no'
         replace: 'PasswordAuthentication yes'  
 
-    - name: "STEP 3-3. SSH Service : restart sshd"
+    - name: "STEP 3-3. Set SSH Config: Restart sshd"
       service:
         name: sshd
         state: restarted
 
+    - name: "STEP 3-4. Set SSH Config: Result"
+      debug:
+        msg: "Done setting SSH Config."
+
+
      ###############################
      ###### STEP 4. 계정 패스워드 변경
-
-    # 현재 crypt 모듈이 Python에서 향후 버전에서 제거될 예정
-    # 대신 passlib 라이브러리를 사용하여 암호화 기능을 사용 가능
-    # passlib 라이브러리를 설치하고, lookup 함수를 사용 필요
-    # pip install passlib
-    # - name: Change user password
-    #   user:
-    #     name: example_user
-    #     password: "{{ lookup('password', 'your_new_password', 'sha512_crypt') }}"
-
-    - name: STEP 4-1. Set root password
+    - name: "STEP 4-1. Set password: root"
       user:
         name: root
         password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-    - name: STEP 4-2. Set password for ubuntu
+    - name: "STEP 4-2. Set password: ubuntu"
       user:
         name: ubuntu
         password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-    - name: STEP 4-3. Display the result
+    - name: "STEP 4-3. Set password: Display the result"
       debug:
-        msg: "Password is set."
+        msg: "Done setting password."
+
     
      ###############################
-     ###### STEP 8. 네트워크 기본 툴 패키지 설치
-
-    - name: "STEP 5. Network Tool Install"
+     ###### STEP 5. 네트워크 기본 툴 패키지 설치
+    - name: "STEP 5-1. Network Tool Install"
       apt:
         name:
           - iputils-*
@@ -124,9 +130,13 @@
           - tcpdump
         state: present
 
-     ###############################
-     ###### STEP 9. NTP 설정
+    - name: "STEP 5-2. Network Tool Install: Display the result"
+      debug:
+        msg: "Done network tool install."    
 
+
+     ###############################
+     ###### STEP 6. NTP 설정
     - name: "STEP 6-1. NTP Client Configuration: Remove origin NTP server"
       lineinfile:
         path: /etc/chrony/chrony.conf
@@ -146,8 +156,10 @@
 
     - name: "TASK IS Done"
       debug:
-        msg: "ALL OF TASK IS Done" 
---- 
+        msg: "ALL OF Ubuntu22.04 TASK IS Done" 
+
+
+        
 ###### 로키 시작#######################
 
 - name: "Cloud MSP Initial set"
