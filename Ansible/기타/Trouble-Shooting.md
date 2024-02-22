@@ -120,3 +120,25 @@
    |FAILED|작업이 실패했음을 나타냅니다. <br>예상치 못한 문제 또는 작업의 실패가 발생한 경우입니다.|
    |UNREACHABLE|대상 호스트에 접속할 수 없을 때 나타납니다. <br>네트워크 문제 또는 호스트가 다운된 경우 등이 해당합니다.|
    |SKIPPED|작업이 실행되지 않았음을 나타냅니다. <br>일반적으로 when 절이나 기타 조건에 의해 작업이 생략되었을 때 발생합니다.|
+
+### 2. ansible TASK 경고 메시지 숨기기
+ansible 설정 파일 수정
+```
+$ vi /etc/ansible/ansible.conf
+```
+내용 추가
+```
+[defaults]
+deprecation_warnings = False
+```
+deprecation_warnings 옵션 기능
+- 버전이 올라감에 따라 사라지거나 변경될 예정인 기능을 사용하거나 참조할 때 출력되는 경고 메시지를 제어
+- True, False (기본값은 True)  
+deprecation_warnings 옵션을 해제 하지 않으면 아래의 사진처럼 경고문 발생
+![image](https://github.com/KMJ-cloud/WINS/assets/71053769/86f37508-4104-4e92-9fd7-b7003a362094)
+
+```*
+[DEPRECATION WARNING]: Encryption using the Python crypt module is deprecated. The Python crypt module is
+deprecated and will be removed from Python 3.13. Install the passlib library for continued encryption
+functionality. This feature will be removed in version 2.17. Deprecation warnings can be disabled by setting
+deprecation_warnings=False in ansible.cfg.```
