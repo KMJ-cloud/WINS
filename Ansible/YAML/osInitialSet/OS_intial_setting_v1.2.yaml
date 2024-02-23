@@ -72,7 +72,7 @@
     - name: "STEP 2-1. History Time Log"
       lineinfile:
         path: /etc/profile
-        line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
+        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \""
         
     - name: "STEP 2-2. History Time Log: Result"
       debug:
@@ -240,7 +240,7 @@
     - name: "STEP 2-1. History Time Logging"
       lineinfile:
         path: /etc/profile
-        line: HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]
+        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \""
 
     - name: "STEP 2-2. History Time Log: Result"
       debug:
