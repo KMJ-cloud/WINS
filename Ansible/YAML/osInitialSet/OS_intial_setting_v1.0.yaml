@@ -6,7 +6,7 @@
 #  ### ###    ##     ##   ##  ##   ##            ##  ##   ##  ##  ##   ##  ##   ##   ## ##            ##   ##  ##   ##   ##                 ##      ##   #  ##  ##   ##   ## #
 #  ##   ##   ####    ##   ##   #####              ####   #######   #####    #####   #####             ##   ##   #####   ####               ####    #######  ##  ##   ##   ## #
 --- 
-- name: "Cloud MSP Initial set"
+- name: "Cloud MSP Ubuntu22.04 Initial set"
   hosts: Ubuntu
   become: yes
   gather_facts: no
@@ -23,33 +23,33 @@
         path: "/root/winsBackup_{{ ldate.stdout }}"
         state: directory
 
-    - name: "STEP 0-2. Backup: /etc/localtime Backup"
+    - name: "STEP 0-2. Backup: /etc/localtime"
       copy:
         src: /etc/localtime
         dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
         remote_src: yes
 
-    - name: "STEP 0-3. Backup: /etc/profile Backup"
+    - name: "STEP 0-3. Backup: /etc/profile"
       copy:
         src: /etc/profile
         dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
         remote_src: yes
 
-    - name: "STEP 0-4. Backup: /etc/ssh/sshd_config Backup"
+    - name: "STEP 0-4. Backup: /etc/ssh/sshd_config"
       copy:
         src: /etc/ssh/sshd_config
         dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
         remote_src: yes
 
-    - name: "STEP 0-5. Backup: /etc/chrony/chrony.conf Backup"
+    - name: "STEP 0-5. Backup: /etc/chrony/chrony.conf"
       copy:
-        src: /etc/chrony/chrony.conf # ubuntu 22.04
+        src: /etc/chrony/chrony.conf
         dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
         remote_src: yes
 
-    - name: "STEP 0-6. Set password: Result"
+    - name: "STEP 0-6. Backup: Result"
       debug:
-        msg: "Backup is Done."
+        msg: "Backup is done."
 
 
      ###############################
@@ -64,7 +64,7 @@
 
     - name: "STEP 1-2. Convert UTC to KST: Result"
       debug:
-        msg: "Done convertting UTC to KST."
+        msg: "Convertting UTC to KST is done"
 
 
      ###############################
@@ -76,7 +76,7 @@
         
     - name: "STEP 2-2. History Time Log: Result"
       debug:
-        msg: "Done history Time."
+        msg: "History Time setting is done."
 
 
      ###############################
@@ -100,7 +100,7 @@
 
     - name: "STEP 3-4. Set SSH Config: Result"
       debug:
-        msg: "Done setting SSH Config."
+        msg: "SSH Config setting is done."
 
 
      ###############################
@@ -115,9 +115,9 @@
         name: ubuntu
         password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
 
-    - name: "STEP 4-3. Set password: Display the result"
+    - name: "STEP 4-3. Set password: Result"
       debug:
-        msg: "Done setting password."
+        msg: "Password setting is done"
 
     
      ###############################
@@ -130,14 +130,14 @@
           - tcpdump
         state: present
 
-    - name: "STEP 5-2. Network Tool Install: Display the result"
+    - name: "STEP 5-2. Network Tool Install: Result"
       debug:
-        msg: "Done network tool install."    
+        msg: "Network tool install is done."    
 
 
      ###############################
      ###### STEP 6. NTP 설정
-    - name: "STEP 6-1. NTP Client Configuration: Remove origin NTP server"
+    - name: "STEP 6-1. NTP Client Configuration: Remove default NTP server"
       lineinfile:
         path: /etc/chrony/chrony.conf
         state: absent
@@ -149,23 +149,26 @@
         insertafter: '# See http://www.pool.ntp.org/join.html for more information.'
         line: 'server time.bora.net iburst'
 
-    - name: "STEP 6-3. NTP Client Configuration: restart chrony"
+    - name: "STEP 6-3. NTP Client Configuration: Restart chrony"
       service:
         name: chrony
         state: restarted
 
-    - name: "STEP 6-4. NTP Client Configuration: Display the result"
+    - name: "STEP 6-4. NTP Client Configuration: Result"
       debug:
-        msg: "Done ntp client configuration."    
+        msg: "NTP server add is Done."    
 
+
+     ###############################
+     ###### 작업 완료 메세지
     - name: "TASK IS Done"
       debug:
         msg: "ALL OF Ubuntu22.04 TASK IS Done" 
 
 
         
-###### 로키 시작#######################
-- name: "Cloud MSP Initial set"
+###### 로키 시작 #######################
+- name: "Cloud MSP Rocky8.9 Initial set"
   hosts: Rocky
   become: yes
   gather_facts: no
@@ -182,39 +185,39 @@
         path: "/root/winsBackup_{{ ldate.stdout }}"
         state: directory
 
-    - name: "STEP 0-2. Backup: /etc/localtime Backup"
+    - name: "STEP 0-2. Backup: /etc/localtime"
       copy:
         src: /etc/localtime
         dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
         remote_src: yes
 
-    - name: "STEP 0-3. Backup: /etc/profile Backup"
+    - name: "STEP 0-3. Backup: /etc/profile"
       copy:
         src: /etc/profile
         dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
         remote_src: yes
 
-    - name: "STEP 0-4. Backup: /etc/ssh/sshd_config Backup"
+    - name: "STEP 0-4. Backup: /etc/ssh/sshd_config"
       copy:
         src: /etc/ssh/sshd_config
         dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
         remote_src: yes
 
-    - name: "STEP 0-5. Backup: /etc/selinux/config Backup"
+    - name: "STEP 0-5. Backup: /etc/selinux/config"
       copy:
         src: /etc/selinux/config
         dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
         remote_src: yes
 
-    - name: "STEP 0-6. Backup: /etc/chrony/chrony.conf Backup"
+    - name: "STEP 0-6. Backup: /etc/chrony/chrony.conf"
       copy:
         src: /etc/chrony.conf
         dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
         remote_src: yes
 
-    - name: "STEP 0-7. Backup: Display the result" # 서비스 중지 메시지 출력
+    - name: "STEP 0-7. Backup: Result"
       debug:
-        msg: "Backup is Done."
+        msg: "Backup is done."
 
 
      ###############################
@@ -241,7 +244,7 @@
 
     - name: "STEP 2-2. History Time Log: Result"
       debug:
-        msg: "Done history Time."
+        msg: "History Time setting is done."
 
 
      ###############################
@@ -282,14 +285,14 @@
         replace: '#GSSAPIAuthentication yes'
       when: grep_result.rc == 0
 
-    - name: "STEP 3-5. SSH Service : restart sshd"
+    - name: "STEP 3-5. SSH Service : Restart sshd"
       service:
         name: sshd
         state: restarted
 
     - name: "STEP 3-6. Set SSH Config: Result"
       debug:
-        msg: "Done setting SSH Config."
+        msg: "SSH Config setting is done."
 
 
      ###############################
@@ -300,9 +303,9 @@
     - name: "STEP 4-2. Set password: rocky"
       shell: "echo 'Sniper13@$' | passwd --stdin rocky > /dev/null"
 
-    - name: "STEP 4-3. Set password: Display the result"
+    - name: "STEP 4-3. Set password: Result"
       debug:
-        msg: "Done setting password."
+        msg: "Password setting is done"
 
         
      ###############################
@@ -313,9 +316,9 @@
         regexp: 'SELINUX=enforcing'
         replace: 'SELINUX=disabled'
 
-    - name: "STEP 5-2. Selinux Disable: Display the result"
+    - name: "STEP 5-2. Selinux Disable: Result"
       debug:
-        msg: "Done selinux disable."    
+        msg: "Set selinux disable."    
 
 
      ###############################
@@ -332,7 +335,7 @@
       register: firewalld_running # 서비스 실행 유무 저장
       when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
 
-    - name: "STEP 6-3. firewalld disable: Display the result" # 서비스 중지 메시지 출력
+    - name: "STEP 6-3. firewalld disable: Result" # 서비스 중지 메시지 출력
       debug:
         msg: "firewalld is {{ 'running' if firewalld_running.status == 'active' else 'not running' }}"
       when: firewalld_installed.stat.exists # firewalld 설치 됐을때만 실행
@@ -377,8 +380,11 @@
 
     - name: "STEP 8-5. NTP Client Configuration: Display the result"
       debug:
-        msg: "Done ntp client configuration."    
+        msg: "NTP server add is Done"    
 
+
+     ###############################
+     ###### 작업 완료 메세지
     - name: "TASK IS Done"
       debug:
         msg: "ALL OF Rocky8.9 TASK IS Done" 
