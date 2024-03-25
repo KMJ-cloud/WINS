@@ -15,41 +15,41 @@
      ###############################
      ###### STEP 0. 백업
     - name: "STEP 0-0. Backup: Date Formatiing"
-      command: date +"%Y-%m-%d_%H-%M-%S"
-      register: ldate
+      command: date +"%Y-%m-%d_%H-%M-%S" # 날짜 포맷
+      register: ldate # 변수
 
     - name: "STEP 0-1. Backup: Make a Backup Directory "
-      file:
-        path: "/root/winsBackup_{{ ldate.stdout }}"
-        state: directory
+      file: # 파일 및 디렉터리 제어 모듈
+        path: "/root/winsBackup_{{ ldate.stdout }}" # 디렉터리 생성 경로와 이름 지정 / ldate.stdout 위에 정의한 ldate 변수를 사용하여 앤서블 실행한 시간이 디렉터리 명 끝에 들어감
+        state: directory # 디렉터리 생성
 
     - name: "STEP 0-2. Backup: /etc/localtime"
-      copy:
-        src: /etc/localtime
-        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/localtime # 원본 경로 지정
+        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-3. Backup: /etc/profile"
-      copy:
-        src: /etc/profile
-        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/profile # 원본 경로 지정
+        dest: "/root/winsBackup_{{ ldate.stdout }}/profile" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-4. Backup: /etc/ssh/sshd_config"
-      copy:
-        src: /etc/ssh/sshd_config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/ssh/sshd_config # 원본 경로 지정 
+        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-5. Backup: /etc/chrony/chrony.conf"
-      copy:
-        src: /etc/chrony/chrony.conf
-        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/chrony/chrony.conf # 원본 경로 지정
+        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-6. Backup: Result"
       debug:
-        msg: "Backup is done."
+        msg: "Backup is done." # 메시지 출력 / 백업 TASK 완료
 
 
      ###############################
