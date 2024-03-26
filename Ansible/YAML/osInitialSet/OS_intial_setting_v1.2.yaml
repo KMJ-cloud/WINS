@@ -125,9 +125,9 @@
     - name: "STEP 5-1. Network Tool Install"
       apt: # 패키기 관리 모듈
         name:
-          - iputils-* # 
-          - net-tools # 
-          - tcpdump # 
+          - iputils-*
+          - net-tools
+          - tcpdump
         state: present # 패키지가 없으면 설치하고, 패키지가 설치되어있으면 최신버전으로 업데이트
 
     - name: "STEP 5-2. Network Tool Install: Result"
@@ -151,7 +151,7 @@
 
     - name: "STEP 6-3. NTP Client Configuration: Restart chrony"
       service: # service 제어 모듈
-        name: chrony
+        name: chrony # NTP 데몬
         state: restarted # 설정 적용을 위해 서비스 재시작
 
     - name: "STEP 6-4. NTP Client Configuration: Result"
@@ -175,150 +175,163 @@
 
   tasks:
      ###############################
-     ###### STEP 0. 백업
+     ###### STEP 0. 백업 / OS 초기 셋팅 작업 시, 변경되는 설정 파일을 백업합니다.
     - name: "STEP 0-0. Backup: Date Formatiing"
-      command: date +"%Y-%m-%d_%H-%M-%S"
-      register: ldate
+      command: date +"%Y-%m-%d_%H-%M-%S" # 날짜 포맷
+      register: ldate # 변수
 
     - name: "STEP 0-1. Backup: Make a Backup Directory "
-      file:
-        path: "/root/winsBackup_{{ ldate.stdout }}"
-        state: directory
+      file: # 파일 및 디렉터리 제어 모듈
+        path: "/root/winsBackup_{{ ldate.stdout }}" # 디렉터리 생성 경로와 이름 지정 / ldate.stdout 위에 정의한 ldate 변수를 사용하여 엔서블 실행한 시간이 디렉터리 명 끝에 들어감
+        state: directory # 디렉터리 생성
 
     - name: "STEP 0-2. Backup: /etc/localtime"
-      copy:
-        src: /etc/localtime
-        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/localtime # 원본 경로 지정
+        dest: "/root/winsBackup_{{ ldate.stdout }}/localtime" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-3. Backup: /etc/profile"
-      copy:
-        src: /etc/profile
-        dest: "/root/winsBackup_{{ ldate.stdout }}/profile"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/profile # 원본 경로 지정
+        dest: "/root/winsBackup_{{ ldate.stdout }}/profile" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-4. Backup: /etc/ssh/sshd_config"
-      copy:
-        src: /etc/ssh/sshd_config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/ssh/sshd_config # 원본 경로 지정 
+        dest: "/root/winsBackup_{{ ldate.stdout }}/sshd_config" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-5. Backup: /etc/selinux/config"
-      copy:
-        src: /etc/selinux/config
-        dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/selinux/config # 원본 경로 지정 
+        dest: "/root/winsBackup_{{ ldate.stdout }}/selinux_config" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-6. Backup: /etc/chrony/chrony.conf"
-      copy:
-        src: /etc/chrony.conf
-        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf"
-        remote_src: yes
+      copy: # 파일 복사 모듈
+        src: /etc/chrony.conf # 원본 경로 지정 
+        dest: "/root/winsBackup_{{ ldate.stdout }}/chrony.conf" # 복사할 경로와 파일명 지정
+        remote_src: yes # 매니지드 노드의 파일 복사 / no: 컨트롤 노드의 파일 복사
 
     - name: "STEP 0-7. Backup: Result"
       debug:
-        msg: "Backup is done."
+        msg: "Backup is done." # 메시지 출력 / 백업 TASK 완료
 
 
      ###############################
-     ###### STEP 1. 타임존 변경
+     ###### STEP 1. 타임존 변경 / 초기 타임존이 UTC로 한국 시간으로 변경하는 설정입니다.
     - name: "STEP 1-1. Convert UTC to KST"
-      file:
-        src: /usr/share/zoneinfo/Asia/Seoul
-        dest: /etc/localtime
-        owner: root
-        group: root
-        state: link
+      file: # 파일 및 디렉터리 제어 모듈
+        src: /usr/share/zoneinfo/Asia/Seoul # 원본 파일  
+        dest: /etc/localtime # 링크 대상 파일
+        owner: root # 소유자
+        group: root # 소유 그룹
+        state: link # 심볼릭 링크
 
     - name: "STEP 1-2. Convert UTC to KST: Result"
       debug:
-        msg: "Done convertting UTC to KST."
+        msg: "Done convertting UTC to KST." # 메시지 출력 / STEP 1 완료
 
 
      ###############################
-     ###### STEP 2. 히스토리 로깅 시간 추가
+     ###### STEP 2. 히스토리 로깅 시간 추가 / history 명령어 사용 시, 명령어 사용 시간도 같이 출력되게 합니다.
     - name: "STEP 2-1. History Time Logging"
-      lineinfile:
-        path: /etc/profile
-        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \""
+      lineinfile: # 파일 내용 삽입 모듈 / 설정 내용을 삽입하기 위해 사용
+        path: /etc/profile # 대상 파일 선택
+        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \"" # 마지막 줄에 해당 내용 추가 / history 시간 포맷 설정 내용
 
     - name: "STEP 2-2. History Time Log: Result"
       debug:
-        msg: "History Time setting is done."
+        msg: "History Time setting is done." # 메시지 출력 / STEP 2 완료
 
 
      ###############################
-     ###### STEP 3. root 로그인 제한
+     ###### STEP 3. root 로그인 제한 / ssh 로그인 시, root 계정 로그인 제한하는 설정을 합니다.
     - name: "STEP 3-1. SSH root login: Block to access root ssh directly"
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: 'PermitRootLogin yes'
-        replace: 'PermitRootLogin no'
+      replace: # 재배치 모듈 / 기본 설정을 root 로그인을 제한하는 설정으로 변경합니다.
+        path: /etc/ssh/sshd_config # 대상 파일 선택
+        regexp: 'PermitRootLogin yes' # 기본 설정
+        replace: 'PermitRootLogin no' # root 계정 로그인 제한 설정으로 변경
 
     - name: "STEP 3-2. SSH Password Login: Allow to login with password"
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: '#PasswordAuthentication yes' 
-        replace: 'PasswordAuthentication yes'
+      replace: # 재배치 모듈 / 기본 설정을 패스워드를 사용하여 로그인 할 수 있도록 변경합니다.
+        path: /etc/ssh/sshd_config # 대상 파일 선택
+        regexp: '#PasswordAuthentication yes' # 기본 설정 / 해당 옵션이 yes 일때 패스워드 사용하여 로그인 가능
+        replace: 'PasswordAuthentication yes' # 패스워드 사용하여 로그인 가능하게 주석 해제
 
     - name: "STEP 3-3. SSH Password Login: Check if PasswordAuthentication is set to no"
       shell: "grep -E '^\\s*PasswordAuthentication\\s+no' /etc/ssh/sshd_config || true"
-      register: grep_result
-      changed_when: false
+      # "|| true" 사용 이유
+      ## -> 만약 grep 명령어가 실패하면 Playbook이 중지됨
+      ## -> Ansible 작업이 실패하지 않았다고 간주
+      # 특정 문자열을 지정하기 위해 정규표현식 사용
+      register: grep_result # 작업 결과 저장하는 변수 / 조건문 사용을 위해 사용
+      changed_when: false # 해당 TASK가 변경을 발생시키지 않았다고 명시
+                          # Ansible에게 변경 여부를 무시하고 항상 변경되지 않았다고 표시
+                          # 만약 설정이 'no'로 되어 있다면 변경이 필요하지 않으므로 변경되지 않았다고 표시
 
     - name: "STEP 3-3. SSH Password Login: Comment PasswordAuthentication if it's set to no"
-      replace:
+      replace: # 재배치 모듈 / 기본 설정을 패스워드를 사용하여 로그인 할 수 있도록 변경합니다.
         path: /etc/ssh/sshd_config
         regexp: '^\s*PasswordAuthentication\s+no'
-        replace: '#PasswordAuthentication no'
-      when: grep_result.rc == 0
+        replace: '#PasswordAuthentication no' # 주석 처리하기
+      when: grep_result.rc == 0 # 이전 TASK에서 ^\s*PasswordAuthentication\\s+no 문자열을 찾으면 해당 TASK 실행하기
+                                # ^\s*PasswordAuthentication\\s+no 문자열을 찾지 못하면 해당 TASK 동작 안함
 
     - name: "STEP 3-4. SSH Password Login: Check if GSSAPIAuthentication is set to no"
       shell: "grep -E '^\\s*GSSAPIAuthentication\\s+yes' /etc/ssh/sshd_config || true"
-      register: grep_result
-      changed_when: false
+      # "|| true" 사용 이유
+      ## -> 만약 grep 명령어가 실패하면 Playbook이 중지됨
+      ## -> Ansible 작업이 실패하지 않았다고 간주
+      register: grep_result # 작업 결과 저장하는 변수 / 조건문 사용을 위해 사용
+      changed_when: false # 해당 TASK가 변경을 발생시키지 않았다고 명시
+                          # Ansible에게 변경 여부를 무시하고 항상 변경되지 않았다고 표시
+                          # 만약 설정이 'no'로 되어 있다면 변경이 필요하지 않으므로 변경되지 않았다고 표시
 
     - name: "STEP 3-4. SSH Password Login: Comment GSSAPIAuthentication if it's set to no"
-      replace:
+      replace: # 재배치 모듈 / kerberos DNS 질의 옵션 주석처리 / 해당 옵션은 간혈적으로 ssh 접속 지연 발생으로 주석처리 합니다.
         path: /etc/ssh/sshd_config
         regexp: '^\s*GSSAPIAuthentication\s+yes'
         replace: '#GSSAPIAuthentication yes'
-      when: grep_result.rc == 0
+      when: grep_result.rc == 0 # 이전 TASK에서 ^\s*GSSAPIAuthentication\s+yes 문자열을 찾으면 해당 TASK 실행하기
+                                # ^\s*GSSAPIAuthentication\s+yes 문자열을 찾지 못하면 해당 TASK 동작 안함
 
     - name: "STEP 3-5. SSH Service : Restart sshd"
-      service:
-        name: sshd
-        state: restarted
+      service: # service 제어 모듈
+        name: sshd # 제어할 service 이름
+        state: restarted # 재시작 / 위에서 설정 변경 내용을 적용하기 위해 sshd 재시작
 
     - name: "STEP 3-6. Set SSH Config: Result"
       debug:
-        msg: "SSH Config setting is done."
+        msg: "SSH Config setting is done." # 메시지 출력 / STEP 3 완료
 
 
      ###############################
-     ###### STEP 4. 계정 패스워드 변경
+     ###### STEP 4. 계정 패스워드 변경 / 로그인을 위해 계정 패스워드를 설정합니다.
     - name: "STEP 4-1. Set password: root"
-      shell: "echo 'Sniper13@$' | passwd --stdin root > /dev/null"
+      shell: "echo 'Sniper13@$' | passwd --stdin root > /dev/null" # 계정 패스워드 설정 
 
-    - name: "STEP 4-2. Set password: rocky"
-      shell: "echo 'Sniper13@$' | passwd --stdin rocky > /dev/null"
+    - name: "STEP 4-2. Set password: rocky" # rocky 리눅스 기본 계정
+      shell: "echo 'Sniper13@$' | passwd --stdin rocky > /dev/null" # 계정 패스워드 설정 
 
     - name: "STEP 4-3. Set password: Result"
       debug:
-        msg: "Password setting is done"
+        msg: "Password setting is done" # 메시지 출력 / STEP 4 완료
 
         
      ###############################
      ###### STEP 5. Selinux 비활성화
     - name: "STEP 5-1. Selinux Disable" # config 파일 수정
-      replace:
+      replace: # 재배치 모듈 
         path: /etc/selinux/config
         regexp: 'SELINUX=enforcing'
         replace: 'SELINUX=disabled'
 
     - name: "STEP 5-2. Selinux Disable: Result"
       debug:
-        msg: "Set selinux disable."    
+        msg: "Set selinux disable."  # 메시지 출력 / STEP 5 완료
 
 
      ###############################
@@ -344,47 +357,48 @@
      ###############################
      ###### STEP 7. 네트워크 기본 툴 패키지 설치
     - name: "STEP 7-1. Network Tool Install" # dnf로 패키지 설치
-      dnf:
+      dnf: # 패키기 관리 모듈
         name: iputils, net-tools, tcpdump
-        state: present
+        state: present # 패키지가 없으면 설치하고, 패키지가 설치되어있으면 최신버전으로 업데이트
 
     - name: "STEP 7-2. Network Tool Install: Display the result"
       debug:
-        msg: "Done network tool install."    
+        msg: "Done network tool install." # 메시지 출력 / STEP 7 완료
 
 
      ###############################
      ###### STEP 8. NTP 설정
     - name: "STEP 8-1. NTP Client Configuration: NTP config check"
       shell: "grep -E '^\\s*pool\\s+2.rocky.pool.ntp.org\\s+iburst' /etc/chrony.conf || true"
-      register: chrony_result
+      # 기존 NTP 설정 문자열 확인
+      register: chrony_result # 기본 설정 문자열이 존재하면 변수에 '0' 값 저장
       changed_when: false
 
     - name: "STEP 8-2. NTP Client Configuration: Comment default setting if it's set to no"
-      replace:
+      replace: # 재배치 모듈 / 기존 NTP 설정 주석처리를 하기 위해 사용합니다.
         path: /etc/chrony.conf
-        regexp: '^\s*pool\s+2.rocky.pool.ntp.org\s+iburst'
-        replace: '#pool 2.rocky.pool.ntp.org iburst'
-      when: chrony_result.rc == 0
+        regexp: '^\s*pool\s+2.rocky.pool.ntp.org\s+iburst' # 기본 NTP 설정 문자열
+        replace: '#pool 2.rocky.pool.ntp.org iburst' # 기본 NTP 설정 문자열 주석 처리
+      when: chrony_result.rc == 0 # 위 TASK에서 기본설정 문자열이 존재하면 해당 TASK 지정
 
     - name: "STEP 8-3. NTP Client Configuration: Add a NTP Korea Server"
-      lineinfile:
-        path: /etc/chrony.conf
-        insertafter: '#pool 2.rocky.pool.ntp.org iburst'
-        line: "server time.bora.net iburst"
+      lineinfile: # 파일 내용 삽입 모듈 / 설정 내용을 삽입하기 위해 사용
+        path: /etc/chrony.conf # 대상 파일
+        insertafter: '#pool 2.rocky.pool.ntp.org iburst' # 해당 문자열 아래에
+        line: "server time.bora.net iburst" # 문자열 삽입 / 실제 NTP 서버 설정 삽입
         
     - name: "STEP 8-4. NTP Client Configuration: restart chrony"
-      service:
-        name: chronyd
-        state: restarted
+      service: # service 제어 모듈
+        name: chronyd # NTP 데몬
+        state: restarted # 설정 적용을 위해 서비스 재시작
 
     - name: "STEP 8-5. NTP Client Configuration: Display the result"
       debug:
-        msg: "NTP server add is Done"    
+        msg: "NTP server add is Done"  # 메시지 출력 / STEP 8 완료  
 
 
      ###############################
      ###### 작업 완료 메세지
     - name: "TASK IS Done"
       debug:
-        msg: "ALL OF Rocky8.9 TASK IS Done" 
+        msg: "ALL OF Rocky8.9 TASK IS Done" # 메시지 출력 / 모든 TASK 완료
