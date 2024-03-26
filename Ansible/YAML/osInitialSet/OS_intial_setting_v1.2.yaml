@@ -6,21 +6,21 @@
 #  ### ###    ##     ##   ##  ##   ##            ##  ##   ##  ##  ##   ##  ##   ##   ## ##            ##   ##  ##   ##   ##                 ##      ##   #  ##  ##   ##   ## #
 #  ##   ##   ####    ##   ##   #####              ####   #######   #####    #####   #####             ##   ##   #####   ####               ####    #######  ##  ##   ##   ## #
 --- 
-- name: "Cloud MSP Ubuntu22.04 Initial set"
-  hosts: Ubuntu
-  become: yes
-  gather_facts: no
+- name: "Cloud MSP Ubuntu22.04 Initial set" # Platbook 이름 명시
+  hosts: Ubuntu # 인벤토리에 정의된 호스트를 지정하여 해당 호스트에 Playbook 실행
+  become: yes # Playbook 실행 시, root 권한으로 실행 유무 (yes : root 권한 사용 / no : root 권한 사용 안함)
+  gather_facts: no # ??????
 
   tasks:
-     ###############################
-     ###### STEP 0. 백업
+     ############################### 
+     ###### STEP 0. 백업 / OS 초기 셋팅 작업 시, 변경되는 설정 파일을 백업합니다.
     - name: "STEP 0-0. Backup: Date Formatiing"
       command: date +"%Y-%m-%d_%H-%M-%S" # 날짜 포맷
       register: ldate # 변수
 
     - name: "STEP 0-1. Backup: Make a Backup Directory "
       file: # 파일 및 디렉터리 제어 모듈
-        path: "/root/winsBackup_{{ ldate.stdout }}" # 디렉터리 생성 경로와 이름 지정 / ldate.stdout 위에 정의한 ldate 변수를 사용하여 앤서블 실행한 시간이 디렉터리 명 끝에 들어감
+        path: "/root/winsBackup_{{ ldate.stdout }}" # 디렉터리 생성 경로와 이름 지정 / ldate.stdout 위에 정의한 ldate 변수를 사용하여 엔서블 실행한 시간이 디렉터리 명 끝에 들어감
         state: directory # 디렉터리 생성
 
     - name: "STEP 0-2. Backup: /etc/localtime"
@@ -53,117 +53,117 @@
 
 
      ###############################
-     ###### STEP 1. 타임존 변경
+     ###### STEP 1. 타임존 변경 / 초기 타임존이 UTC로 한국 시간으로 변경하는 설정입니다.
     - name: "STEP 1-1. Convert UTC to KST"
-      file:
-        src: /usr/share/zoneinfo/Asia/Seoul
-        dest: /etc/localtime
-        owner: root
-        group: root
-        state: link
+      file: # 파일 및 디렉터리 제어 모듈
+        src: /usr/share/zoneinfo/Asia/Seoul # 원본 파일  
+        dest: /etc/localtime # 링크 대상 파일
+        owner: root # 소유자
+        group: root # 소유 그룹
+        state: link # 심볼릭 링크
 
     - name: "STEP 1-2. Convert UTC to KST: Result"
       debug:
-        msg: "Convertting UTC to KST is done"
+        msg: "Convertting UTC to KST is done" # 메시지 출력 / STEP 1 완료
 
 
      ###############################
-     ###### STEP 2. 히스토리 시간 포맷 설정
+     ###### STEP 2. 히스토리 시간 포맷 설정 / history 명령어 사용 시, 명령어 사용 시간도 같이 출력되게 합니다.
     - name: "STEP 2-1. History Time Log"
-      lineinfile:
-        path: /etc/profile
-        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \""
+      lineinfile: # 파일 내용 삽입 모듈 / 설정 내용을 삽입하기 위해 사용
+        path: /etc/profile # 대상 파일 선택
+        line: "HISTTIMEFORMAT=\"[%Y-%m-%d_%H:%M:%S]  \"" # 마지막 줄에 해당 내용 추가 / history 시간 포맷 설정 내용
         
-    - name: "STEP 2-2. History Time Log: Result"
+    - name: "STEP 2-2. History Time Log: result"
       debug:
-        msg: "History Time setting is done."
+        msg: "History Time setting is done." # 메시지 출력 / STEP 2 완료
 
 
      ###############################
-     ###### STEP 3. root 로그인 제한
+     ###### STEP 3. root 로그인 제한 / ssh 로그인 시, root 계정 로그인 제한하는 설정을 합니다.
     - name: "STEP 3-1. Set SSH Config: Block to access root ssh directly"
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: '#PermitRootLogin prohibit-password'
-        replace: 'PermitRootLogin no'
+      replace: # 재배치 모듈 / 기본 설정을 root 로그인을 제한하는 설정으로 변경합니다.
+        path: /etc/ssh/sshd_config # 대상 파일 선택
+        regexp: '#PermitRootLogin prohibit-password' # 기본 설정 / 주석
+        replace: 'PermitRootLogin no' # root 계정 로그인 제한 설정으로 변경
 
-    - name: "STEP 3-2. Set SSH Config: Allow to login with password"        
-      replace:
-        path: /etc/ssh/sshd_config
-        regexp: 'PasswordAuthentication no'
-        replace: 'PasswordAuthentication yes'  
+    - name: "STEP 3-2. Set SSH Config: Allow to login with password"
+      replace: # 재배치 모듈 / 기본 설정을 패스워드를 사용하여 로그인 할 수 있도록 변경합니다.
+        path: /etc/ssh/sshd_config # 대상 파일 선택
+        regexp: 'PasswordAuthentication no' # 기본 설정 / 패스워드 사용 불가
+        replace: 'PasswordAuthentication yes' # 패스워드 사용하여 로그인 가능하게 설정 변경
 
     - name: "STEP 3-3. Set SSH Config: Restart sshd"
-      service:
-        name: sshd
-        state: restarted
+      service: # service 제어 모듈
+        name: sshd # 제어할 service 이름
+        state: restarted # 재시작 / 위에서 설정 변경 내용을 적용하기 위해 sshd 재시작
 
     - name: "STEP 3-4. Set SSH Config: Result"
       debug:
-        msg: "SSH Config setting is done."
+        msg: "SSH Config setting is done." # 메시지 출력 / STEP 3 완료
 
 
      ###############################
-     ###### STEP 4. 계정 패스워드 변경
+     ###### STEP 4. 계정 패스워드 변경 / 로그인을 위해 계정 패스워드를 설정합니다.
     - name: "STEP 4-1. Set password: root"
-      user:
-        name: root
-        password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
+      user: # 계정 제어 모듈
+        name: root # 계정 이름
+        password: "{{ 'Sniper13@$' | password_hash('sha512') }}" # 계정 패스워드 설정 / sha512 암호화
 
     - name: "STEP 4-2. Set password: ubuntu"
-      user:
-        name: ubuntu
-        password: "{{ 'Sniper13@$' | password_hash('sha512') }}"
+      user: # 계정 제어 모듈
+        name: ubuntu # 계정 이름 / 우분투 기본 계정
+        password: "{{ 'Sniper13@$' | password_hash('sha512') }}" # 계정 패스워드 설정 / sha512 암호화
 
     - name: "STEP 4-3. Set password: Result"
       debug:
-        msg: "Password setting is done"
+        msg: "Password setting is done" # 메시지 출력 / STEP 4 완료
 
-    
+
      ###############################
      ###### STEP 5. 네트워크 기본 툴 패키지 설치
     - name: "STEP 5-1. Network Tool Install"
-      apt:
+      apt: # 패키기 관리 모듈
         name:
-          - iputils-*
-          - net-tools
-          - tcpdump
-        state: present
+          - iputils-* # 
+          - net-tools # 
+          - tcpdump # 
+        state: present # 패키지가 없으면 설치하고, 패키지가 설치되어있으면 최신버전으로 업데이트
 
     - name: "STEP 5-2. Network Tool Install: Result"
       debug:
-        msg: "Network tool install is done."    
+        msg: "Network tool install is done." # 메시지 출력 / STEP 5 완료
 
 
      ###############################
      ###### STEP 6. NTP 설정
     - name: "STEP 6-1. NTP Client Configuration: Remove default NTP server"
-      lineinfile:
-        path: /etc/chrony/chrony.conf
-        state: absent
-        regexp: "^pool"
+      lineinfile: # 파일 내용 삽입 모듈 / 설정 내용을 삽입하기 위해 사용
+        path: /etc/chrony/chrony.conf # 대상 파일
+        state: absent # 문자열 삭제
+        regexp: "^pool" # pool 로 끝나는 문자열
 
     - name: "STEP 6-2. NTP Client Configuration: Add a NTP Korea Server"
-      lineinfile:
-        path: /etc/chrony/chrony.conf
-        insertafter: '# See http://www.pool.ntp.org/join.html for more information.'
-        line: 'server time.bora.net iburst'
+      lineinfile: # 파일 내용 삽입 모듈 / 설정 내용을 삽입하기 위해 사용
+        path: /etc/chrony/chrony.conf # 대상 파일
+        insertafter: '# See http://www.pool.ntp.org/join.html for more information.' # 해당 문자열 아래에
+        line: 'server time.bora.net iburst' # 문자열 삽입
 
     - name: "STEP 6-3. NTP Client Configuration: Restart chrony"
-      service:
+      service: # service 제어 모듈
         name: chrony
-        state: restarted
+        state: restarted # 설정 적용을 위해 서비스 재시작
 
     - name: "STEP 6-4. NTP Client Configuration: Result"
       debug:
-        msg: "NTP server add is Done."    
+        msg: "NTP server add is Done." # 메시지 출력 / STEP 6 완료
 
 
      ###############################
      ###### 작업 완료 메세지
     - name: "TASK IS Done"
       debug:
-        msg: "ALL OF Ubuntu22.04 TASK IS Done" 
+        msg: "ALL OF Ubuntu22.04 TASK IS Done" # 메시지 출력 / 모든 TASK 완료
 
 
         
